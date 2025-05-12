@@ -1,0 +1,5 @@
+app.security:
+    users:
+      - username: admin
+        password: admin
+        roles: ADMIN

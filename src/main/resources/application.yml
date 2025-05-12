@@ -1,0 +1,44 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: mikrotik-control
+  thymeleaf:
+    cache: false
+    mode: HTML
+    encoding: UTF-8
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    com.baybaka.mikrotikcontrol: INFO
+    org.springframework.web: INFO
+    org.springframework.cloud.openfeign: DEBUG
+    org.springframework.security: INFO
+
+mikrotik:
+  router-url: http://${ROUTER_IP}
+  username: ${ROUTER_USER}
+  password: ${ROUTER_PASSWORD}
+  simple-queue-list:
+    - "1"
+  rules-list:
+    - "381" # id example

@@ -1,0 +1,21 @@
+# Тестовая конфигурация
+# Эти значения будут переопределены переменными окружения, если они заданы
+
+spring:
+  security:
+    user:
+      name: admin
+      password: admin
+      
+logging:
+  level:
+    com.baybaka.mikrotikcontrol: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+    
+# Настройки для MikroTik API
+# Для интеграционных тестов используйте переменные окружения:
+# ROUTER_IP, ROUTER_USER, ROUTER_PASSWORD
+mikrotik:
+  router-url: http://${ROUTER_IP}
+  username: ${ROUTER_USER}
+  password: ${ROUTER_PASSWORD}
