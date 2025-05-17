@@ -18,7 +18,10 @@ interface MikrotikApiClient {
      */
     @GetMapping("ip/firewall/filter")
     fun getFirewallRuleAll(): List<FirewallRuleResponse>
-    
+
+    @GetMapping("/queue/simple")
+    fun getSimpleQueueRules(): List<QueueResponse>
+
     /**
      * Получить правило фаервола по номеру
      */
@@ -34,7 +37,7 @@ interface MikrotikApiClient {
     /**
      * Обновить правило фаервола
      */
-    @PutMapping("/ip/firewall/filter/{ruleNumber}")
+    @PatchMapping("/ip/firewall/filter/{ruleNumber}")
     fun updateFirewallRule(
         @PathVariable ruleNumber: String, 
         @RequestBody updates: Map<String, Any>
@@ -43,7 +46,7 @@ interface MikrotikApiClient {
     /**
      * Обновить правило очереди
      */
-    @PutMapping("/queue/simple/{ruleNumber}")
+    @PatchMapping("/queue/simple/{ruleNumber}")
     fun updateQueueRule(
         @PathVariable ruleNumber: String, 
         @RequestBody updates: Map<String, Any>
