@@ -49,7 +49,7 @@ class MikrotikApiAdapter(private val apiClient: MikrotikApiClient) : MikrotikApi
         return try {
             when (rule.type) {
                 RuleType.FIREWALL -> apiClient.getFirewallRule(rule.ruleNumber).disabled
-                RuleType.QUEUE -> false
+                RuleType.QUEUE -> apiClient.getQueueRule(rule.ruleNumber).disabled
             }
         } catch (e: FeignException) {
             logger.error("Ошибка при запросе к MikroTik API: ${e.message}")

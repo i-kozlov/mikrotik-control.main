@@ -1,7 +1,7 @@
 package com.baybaka.mikrotikcontrol.presentation.dto
 
 import com.baybaka.mikrotikcontrol.domain.model.MikrotikRule
-import com.baybaka.mikrotikcontrol.domain.model.MikrotikRule.RuleType
+import com.baybaka.mikrotikcontrol.domain.model.ScheduledTask
 
 /**
  * DTO для передачи информации о правиле MikroTik
@@ -27,12 +27,14 @@ data class BulkToggleRequest(
 /**
  * Конвертирует доменную модель в DTO
  */
-fun MikrotikRule.toDto(): MikrotikRuleDto = MikrotikRuleDto(
-    uid = this.uid,
-    type = this.type.name,
-    ruleNumber = this.ruleNumber,
-    description = this.description,
-    enabled = this.enabled,
-    autoOff = this.autoOff,
-    autoOn = this.autoOn
-)
+fun MikrotikRule.toDto(): MikrotikRuleDto {
+    return MikrotikRuleDto(
+        uid = this.uid,
+        type = this.type.name,
+        ruleNumber = this.ruleNumber,
+        description = this.description,
+        enabled = this.enabled,
+        autoOff = this.autoOff,
+        autoOn = this.autoOn
+    )
+}
