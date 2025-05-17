@@ -1,7 +1,6 @@
 package com.baybaka.mikrotikcontrol.application.service
 
 import com.baybaka.mikrotikcontrol.domain.exception.EntityNotFoundException
-import com.baybaka.mikrotikcontrol.domain.exception.RuleDescriptionMismatchException
 import com.baybaka.mikrotikcontrol.domain.model.MikrotikRule
 import com.baybaka.mikrotikcontrol.domain.repository.RuleRepository
 import com.baybaka.mikrotikcontrol.domain.service.MikrotikApiPort
@@ -29,7 +28,6 @@ class RuleManagementService(
         // Получаем актуальное состояние с устройства
         val enabled = mikrotikApiPort.getRuleState(rule)
         rule.enabled = enabled
-
         
         return rule
     }

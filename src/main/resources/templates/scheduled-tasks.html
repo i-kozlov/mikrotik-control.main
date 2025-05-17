@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" 
+      lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запланированные задачи MikroTik</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .task-card {
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .enable-task {
+            border-left: 5px solid #198754; /* Зеленый цвет для задач на включение */
+        }
+        .disable-task {
+            border-left: 5px solid #dc3545; /* Красный цвет для задач на выключение */
+        }
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Уведомление для AJAX ответов -->
+    <div id="notification" class="toast align-items-center" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="notification-message">
+                Сообщение
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+    
+    <div class="container py-5">
+        <header class="pb-3 mb-4 border-bottom">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <img src="https://mikrotik.com/img/mtv2/logo.svg" alt="MikroTik Logo" height="30" class="me-3">
+                    <h1 class="fs-4">Запланированные задачи MikroTik</h1>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <span sec:authentication="name">Username</span>
+                        <span class="badge bg-secondary ms-1" sec:authorize="hasRole('ADMIN')">Администратор</span>
+                        <span class="badge bg-info ms-1" sec:authorize="hasRole('USER')">Пользователь</span>
+                    </div>
+                    <a href="/" class="btn btn-outline-primary btn-sm me-2">На главную</a>
+                    <form th:action="@{/logout}" method="post">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Выйти</button>
+                    </form>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Список задач -->
+        <div class="row" id="tasks-container">
+            <div th:each="task : ${tasks}" 
+                 class="col-md-6 col-lg-4 mb-4 task-item">
+                <div th:class="'card task-card ' + ${task.targetState ? 'enable-task' : 'disable-task'}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0" th:text="${task.ruleDescription}">Описание правила</h5>
+                        <div>
+                            <span class="badge" 
+                                  th:classappend="${task.targetState ? 'bg-success' : 'bg-danger'}" 
+                                  th:text="${task.targetState ? 'Включение' : 'Отключение'}">
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Правило: <span th:text="${task.ruleUid}"></span></p>
+                        <p class="card-text">Время выполнения: <span th:text="${#temporals.format(task.executionTime, 'dd.MM.yyyy HH:mm:ss')}"></span></p>
+                        <p class="card-text">Осталось: <span th:text="${task.remainingMinutes + ' мин'}"></span></p>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <button class="btn btn-sm btn-outline-danger cancel-task"
+                                th:data-id="${task.id}"
+                                th:data-rule-uid="${task.ruleUid}">Отменить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Если задач нет -->
+        <div th:if="${#lists.isEmpty(tasks)}" class="alert alert-info">
+            <h4 class="alert-heading">Запланированных задач нет!</h4>
+            <p>В системе нет запланированных задач для выполнения.</p>
+            <hr>
+            <p class="mb-0">Вы можете создать временную задачу на главной странице с помощью кнопки "На время".</p>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Подготовка уведомлений
+        const toastElement = document.getElementById('notification');
+        const toastMessage = document.getElementById('notification-message');
+        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+        
+        function showNotification(message, isSuccess) {
+            toastElement.classList.remove('text-bg-success', 'text-bg-danger');
+            toastElement.classList.add(isSuccess ? 'text-bg-success' : 'text-bg-danger');
+            toastMessage.textContent = message;
+            toast.show();
+        }
+        
+        // Отмена задачи
+        document.querySelectorAll('.cancel-task').forEach(button => {
+            button.addEventListener('click', function() {
+                const ruleUid = this.dataset.ruleUid;
+                
+                // Отключаем кнопку на время запроса
+                this.disabled = true;
+                
+                fetch(`/api/rules/${ruleUid}/scheduled-tasks`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Удаляем карточку из интерфейса
+                        const taskCard = this.closest('.task-item');
+                        taskCard.remove();
+                        
+                        showNotification('Задача успешно отменена', true);
+                        
+                        // Проверяем, остались ли задачи
+                        if (document.querySelectorAll('.task-item').length === 0) {
+                            // Если задач больше нет, показываем сообщение
+                            const container = document.getElementById('tasks-container');
+                            container.innerHTML = `
+                                <div class="alert alert-info col-12">
+                                    <h4 class="alert-heading">Запланированных задач нет!</h4>
+                                    <p>В системе нет запланированных задач для выполнения.</p>
+                                    <hr>
+                                    <p class="mb-0">Вы можете создать временную задачу на главной странице с помощью кнопки "На время".</p>
+                                </div>`;
+                        }
+                    } else {
+                        this.disabled = false;
+                        showNotification('Ошибка при отмене задачи: ' + data.error, false);
+                    }
+                })
+                .catch(error => {
+                    this.disabled = false;
+                    showNotification('Ошибка при выполнении запроса: ' + error, false);
+                    console.error('Ошибка:', error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -83,6 +83,7 @@
                         <span class="badge bg-secondary ms-1" sec:authorize="hasRole('ADMIN')">Администратор</span>
                         <span class="badge bg-info ms-1" sec:authorize="hasRole('USER')">Пользователь</span>
                     </div>
+                    <a href="/scheduled-tasks" class="btn btn-outline-primary btn-sm me-2">Запланированные задачи</a>
                     <form th:action="@{/logout}" method="post">
                         <button type="submit" class="btn btn-outline-danger btn-sm">Выйти</button>
                     </form>
@@ -155,12 +156,31 @@
                         <p class="card-text" th:text="${rule.description}"></p>
                     </div>
                     <div class="card-footer d-flex justify-content-between">
-                        <button class="btn btn-sm toggle-rule"
-                                th:data-uid="${rule.uid}"
-                                th:data-enable="${!rule.enabled}"
-                                th:classappend="${rule.enabled ? 'btn-outline-danger' : 'btn-outline-success'}"
-                                th:text="${rule.enabled ? 'Отключить' : 'Включить'}">
-                        </button>
+                        <div class="d-flex">
+                            <button class="btn btn-sm toggle-rule me-2"
+                                    th:data-uid="${rule.uid}"
+                                    th:data-enable="${!rule.enabled}"
+                                    th:classappend="${rule.enabled ? 'btn-outline-danger' : 'btn-outline-success'}"
+                                    th:text="${rule.enabled ? 'Отключить' : 'Включить'}">
+                            </button>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-success dropdown-toggle temp-enable-btn" 
+                                        type="button"
+                                        data-bs-toggle="dropdown" 
+                                        aria-expanded="false"
+                                        th:data-uid="${rule.uid}">
+                                    На время
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item enable-temporary" 
+                                        th:data-uid="${rule.uid}" 
+                                        data-minutes="15">На 15 минут</a></li>
+                                    <li><a class="dropdown-item enable-temporary" 
+                                        th:data-uid="${rule.uid}" 
+                                        data-minutes="60">На 1 час</a></li>
+                                </ul>
+                            </div>
+                        </div>
                         <button class="btn btn-sm btn-outline-secondary refresh-rule" 
                                 th:data-uid="${rule.uid}">Обновить статус</button>
                     </div>
@@ -210,6 +230,8 @@
             });
         });
         
+        // Периодическое обновление отменено - страница обновляется только при действиях пользователя
+        
         function showNotification(message, isSuccess) {
             toastElement.classList.remove('text-bg-success', 'text-bg-danger');
             toastElement.classList.add(isSuccess ? 'text-bg-success' : 'text-bg-danger');
@@ -247,12 +269,55 @@
             });
         });
         
+        // Временное изменение состояния правила
+        document.querySelectorAll('.enable-temporary').forEach(link => {
+            link.addEventListener('click', function() {
+                const uid = this.dataset.uid;
+                const minutes = this.dataset.minutes;
+                
+                // Найдем карточку правила
+                const ruleCard = document.getElementById('rule-' + uid);
+                
+                // Определяем текущее состояние правила и целевое состояние для планировщика
+                const isCurrentlyEnabled = ruleCard.classList.contains('rule-enabled');
+                
+                // Определяем целевое состояние (противоположное текущему)
+                const targetState = !isCurrentlyEnabled;
+                
+                // Сначала изменяем состояние правила
+                fetch(`/api/rules/${uid}/toggle?enable=${targetState}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Обновляем отображение правила
+                    updateRuleCard(data);
+                    
+                    // Планируем возврат в исходное состояние
+                    return fetch(`/api/rules/${uid}/schedule?targetState=${isCurrentlyEnabled}&minutes=${minutes}`, {
+                        method: 'POST'
+                    });
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const action = targetState ? 'включено' : 'отключено';
+                        showNotification(`Правило временно ${action} на ${minutes} минут`, true);
+                    } else {
+                        showNotification(`Ошибка при планировании: ${data.error}`, false);
+                    }
+                })
+                .catch(error => {
+                    showNotification('Ошибка при выполнении запроса: ' + error, false);
+                    console.error('Ошибка:', error);
+                });
+            });
+        });
+        
         // Обновление карточки правила после переключения
         function updateRuleCard(rule) {
             const ruleCard = document.getElementById('rule-' + rule.uid);
             if (!ruleCard) return;
-            
-            // Обновляем только динамические элементы: статус и классы стилизации
             
             // Обновляем классы для стилизации
             if (rule.enabled) {
@@ -309,7 +374,13 @@
                 toggleButton.textContent = rule.enabled ? 'Отключить' : 'Включить';
                 toggleButton.dataset.enable = (!rule.enabled).toString();
             }
+            
+            // Убрана вся логика, связанная с отображением информации о временном состоянии
         }
+        
+        // Функция для работы с временным состоянием удалена - фронт не знает о временном статусе
+        
+        // Проверяем все правила на наличие временного включения - функция удалена, т.к. не нужна
         
         // Обновление статуса правила
         document.querySelectorAll('.refresh-rule').forEach(button => {
