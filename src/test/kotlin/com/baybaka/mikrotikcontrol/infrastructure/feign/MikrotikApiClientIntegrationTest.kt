@@ -19,6 +19,7 @@ import kotlin.test.assertNotNull
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test") // Используем тестовый профиль, если он есть
+@Disabled("Tests to run against real device")
 class MikrotikApiClientIntegrationTest {
     
     @Autowired
@@ -29,16 +30,11 @@ class MikrotikApiClientIntegrationTest {
      */
     @Test
     fun testGetFirewallRule() {
-        // Выполняем запрос к API MikroTik с точно таким же ID, как в Postman
         val result = mikrotikApiClient.getFirewallRule("*367")
         
-        // Проверяем, что ответ не пустой и содержит ожидаемые поля
         assertNotNull(result)
         println("Получено правило: $result")
-        
-        // Проверяем наличие ключевых полей
         assertNotNull(result.id)
-        // Другие проверки, специфичные для вашего окружения
     }
     
     /**
