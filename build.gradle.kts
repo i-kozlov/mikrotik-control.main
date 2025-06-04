@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.baybaka"
-version = "0.0.2-SNAPSHOT"
+version = "0.0.3-SNAPSHOT"
 
 java {
     toolchain {
@@ -57,4 +57,8 @@ kotlin {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+springBoot {
+    buildInfo()
 }

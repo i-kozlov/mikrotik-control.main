@@ -78,7 +78,10 @@
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
                     <img src="https://mikrotik.com/img/mtv2/logo.svg" alt="MikroTik Logo" height="30" class="me-3">
-                    <h1 class="fs-4">Управление правилами MikroTik</h1>
+                    <div>
+                        <h1 class="fs-4 mb-0">Управление правилами MikroTik</h1>
+                        <small class="text-muted" th:text="'Версия: ' + (${@buildProperties?.version} ?: 'Unknown')">Версия: Unknown</small>
+                    </div>
                 </div>
                 <div class="d-flex align-items-center">
                     <div class="me-3">
