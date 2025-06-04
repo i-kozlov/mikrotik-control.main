@@ -1,6 +1,7 @@
 package com.baybaka.mikrotikcontrol.infrastructure.config
 
 import jakarta.annotation.PostConstruct
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -18,6 +19,7 @@ import org.springframework.security.config.annotation.web.invoke
  * Spring Security configuration for application protection
  */
 @Configuration
+@ConditionalOnMissingBean(SecurityFilterChain::class)
 @EnableWebSecurity
 class SecurityConfig(private val userProperties: UserProperties) {
 
