@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.http.ResponseEntity
+import java.util.LinkedHashMap
 
 /**
  * Контроллер для веб-интерфейса управления правилами
@@ -25,7 +26,37 @@ class RuleWebController(
     @GetMapping("/")
     fun index(model: Model): String {
         val rules = ruleManagementService.getAllRules()
+        
+        // Группируем правила по группам, сохраняя порядок из конфигурации
+        val groupedRules = rules.groupBy { it.group }
+        
+        // Получаем отсортированные группы из конфигурации
+        val sortedGroupConfigs = ruleManagementService.getSortedGroupConfigs()
+        
+        // Создаем упорядоченную карту групп
+        val orderedGroupedRules = LinkedHashMap<String, List<MikrotikRule>>()
+        
+        // Сначала добавляем группы в порядке конфигурации
+        for ((groupKey, groupConfig) in sortedGroupConfigs) {
+            groupedRules[groupKey]?.let { rulesInGroup ->
+                orderedGroupedRules[groupKey] = rulesInGroup
+            }
+        }
+        
+        // Добавляем группы, которых нет в конфигурации (в алфавитном порядке)
+        val configuredGroupKeys = sortedGroupConfigs.map { it.first }.toSet()
+        val unconfiguredGroups = groupedRules.keys.minus(configuredGroupKeys).sorted()
+        for (groupKey in unconfiguredGroups) {
+            orderedGroupedRules[groupKey] = groupedRules[groupKey]!!
+        }
+        
+        // Получаем все уникальные группы в правильном порядке
+        val allGroups = orderedGroupedRules.keys.toList()
+        
         model.addAttribute("rules", rules)
+        model.addAttribute("groupedRules", orderedGroupedRules)
+        model.addAttribute("allGroups", allGroups)
+        model.addAttribute("groupConfigs", sortedGroupConfigs.associate { it.first to it.second })
         model.addAttribute("types", MikrotikRule.RuleType.values())
         return "index"
     }

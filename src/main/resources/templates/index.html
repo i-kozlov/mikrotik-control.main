@@ -5,62 +5,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление правилами MikroTik</title>
+    <title>MikroTik Control</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        .rule-card {
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 0;
-        }
-        .rule-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            z-index: 1020;
-        }
-        .enabled {
-            border-left: 5px solid #198754; /* Зеленый цвет для включенных правил */
-        }
-        .disabled {
-            border-left: 5px solid #6c757d; /* Серый цвет для выключенных правил */
-        }
-        .enabled-bg {
-            background-color: rgba(25, 135, 84, 0.1);
-        }
-        .disabled-bg {
-            background-color: rgba(220, 220, 220, 0.3);
-        }
-        .auto-on-badge {
-            background-color: #7289DA !important; /* Цвет для Авто-вкл */
-            color: white !important;
-            font-weight: bold;
-        }
-        .auto-off-badge {
-            background-color: #FFA500 !important; /* Цвет для Авто-выкл */
-            color: white !important;
-            font-weight: bold;
-        }
-        .scheduled-badge {
-            background-color: #0d6efd !important; /* Синий цвет для часов */
-            color: white !important;
-            font-size: 0.8em;
-            padding: 0.25em 0.5em;
-        }
-        .inactive-time-badge {
-            background-color: #dc3545 !important; /* Красный цвет для "сейчас выключено" */
-            color: white !important;
-            font-size: 0.8em;
-            padding: 0.25em 0.5em;
-        }
-        #notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-            display: none;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/mikrotik-styles.css}">
 </head>
 <body>
     <!-- Уведомление для AJAX ответов -->
@@ -73,122 +21,202 @@
         </div>
     </div>
     
-    <div class="container py-5">
+    <div class="container py-3 py-md-5">
+        <!-- Единый заголовок -->
         <header class="pb-3 mb-4 border-bottom">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
-                    <img src="https://mikrotik.com/img/mtv2/logo.svg" alt="MikroTik Logo" height="30" class="me-3">
-                    <div>
-                        <h1 class="fs-4 mb-0">Управление правилами MikroTik</h1>
-                        <small class="text-muted" th:text="'Версия: ' + (${@buildProperties?.version} ?: 'Unknown')">Версия: Unknown</small>
+                    <!-- Мобильная версия: логотип сверху, версия снизу -->
+                    <div class="d-flex d-md-none flex-column align-items-center">
+                        <img src="https://mikrotik.com/img/mtv2/logo.svg" alt="MikroTik Logo" height="30" class="mb-1">
+                        <small class="text-muted" th:text="(${@buildProperties?.version} ?: 'Unknown')">Unknown</small>
+                    </div>
+                    
+                    <!-- Десктопная версия: логотип слева, версия справа -->
+                    <div class="d-none d-md-flex align-items-center">
+                        <img src="https://mikrotik.com/img/mtv2/logo.svg" alt="MikroTik Logo" height="30" class="me-3">
+                        <div>
+                            <small class="text-muted" th:text="(${@buildProperties?.version} ?: 'Unknown')">Unknown</small>
+                        </div>
                     </div>
                 </div>
                 <div class="d-flex align-items-center">
                     <div class="me-3">
-                        <span sec:authentication="name">Username</span>
                         <span class="badge bg-secondary ms-1" sec:authorize="hasRole('ADMIN')">Администратор</span>
                         <span class="badge bg-info ms-1" sec:authorize="hasRole('USER')">Пользователь</span>
                     </div>
-                    <a href="/scheduled-tasks" class="btn btn-outline-primary btn-sm me-2">Запланированные задачи</a>
+                    <a href="/scheduled-tasks" class="btn btn-outline-primary btn-sm me-2" title="Запланированные задачи">
+                        <span class="d-none d-md-inline">Запланированные задачи</span>
+                        <i class="bi bi-calendar-event d-md-none"></i>
+                    </a>
                     <form th:action="@{/logout}" method="post">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">Выйти</button>
+                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Выйти">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </button>
                     </form>
                 </div>
             </div>
         </header>
         
         <!-- Фильтры -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <input type="text" id="rule-search" class="form-control" placeholder="Поиск по описанию...">
-                    <button class="btn btn-outline-secondary" type="button">
-                        <i class="bi bi-search"></i> Найти
-                    </button>
-                </div>
+        <div class="mb-4">
+            <!-- Кнопка для раскрытия фильтров на мобильных -->
+            <div class="d-block d-md-none mb-3">
+                <button class="btn btn-outline-secondary w-100 mobile-filters-toggle" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#mobile-filters" aria-expanded="false" aria-controls="mobile-filters">
+                    <i class="bi bi-funnel"></i> Фильтры и поиск
+                    <i class="bi bi-chevron-down float-end"></i>
+                </button>
             </div>
-            <div class="col-md-6 text-end">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-primary filter-btn active" data-filter="all">Все</button>
-                    <button type="button" class="btn btn-outline-danger filter-btn" data-filter="FIREWALL">Фаервол</button>
-                    <button type="button" class="btn btn-outline-info filter-btn" data-filter="QUEUE">Очереди</button>
-                </div>
-                <div class="btn-group ms-2" role="group">
-                    <button type="button" class="btn btn-outline-success filter-state-btn active" data-state="all">Все статусы</button>
-                    <button type="button" class="btn btn-outline-success filter-state-btn" data-state="enabled">Активные</button>
-                    <button type="button" class="btn btn-outline-danger filter-state-btn" data-state="disabled">Неактивные</button>
+            
+            <!-- Блок фильтров -->
+            <div class="collapse d-md-block" id="mobile-filters">
+                <div class="row filters-row">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="input-group">
+                            <input type="text" id="rule-search" class="form-control" placeholder="Поиск по описанию...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="bi bi-search"></i> <span class="d-none d-md-inline">Найти</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="filters-mobile">
+                            <div class="btn-group mb-2 mb-md-0" role="group">
+                                <button type="button" class="btn btn-outline-primary filter-btn active" data-filter="all">Все</button>
+                                <button type="button" class="btn btn-outline-danger filter-btn" data-filter="FIREWALL">Фаервол</button>
+                                <button type="button" class="btn btn-outline-info filter-btn" data-filter="QUEUE">Очереди</button>
+                            </div>
+                            <div class="btn-group mb-2 mb-md-0" role="group">
+                                <button type="button" class="btn btn-outline-success filter-state-btn active" data-state="all">Все статусы</button>
+                                <button type="button" class="btn btn-outline-success filter-state-btn" data-state="enabled">Активные</button>
+                                <button type="button" class="btn btn-outline-danger filter-state-btn" data-state="disabled">Неактивные</button>
+                            </div>
+                            <div class="btn-group d-none d-md-flex" role="group">
+                                <button type="button" class="btn btn-outline-secondary" id="expand-all-groups">Развернуть все</button>
+                                <button type="button" class="btn btn-outline-secondary" id="collapse-all-groups">Свернуть все</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- Карточки правил -->
-        <div class="row" id="rules-container">
-            <div th:each="rule : ${rules}" 
-                 th:class="'col-md-6 col-lg-4 mb-4 rule-item ' + ${rule.enabled ? 'rule-enabled' : 'rule-disabled'}" 
-                 th:data-type="${rule.type}" 
-                 th:id="'rule-' + ${rule.uid}"
-                 th:data-rule-number="${rule.ruleNumber}">
-                <div th:class="'card rule-card ' + ${rule.enabled ? 'enabled enabled-bg' : 'disabled disabled-bg'}">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            <span th:if="${rule.type == 'FIREWALL'}" th:text="'FW ' + ${rule.ruleNumber}">FW 123</span>
-                            <!-- Для не-Firewall правил заголовок не отображаем -->
-                        </h5>
-                        <div>
-                            <!-- Бейджи, которые всегда присутствуют в DOM, но отображаются по условию -->
-                            <span class="badge me-1 scheduled-badge" 
-                                 title="Работает только в определенные часы" th:style="${rule.scheduled ? '' : 'display: none;'}">
-                                <i class="bi bi-clock"></i>
-                            </span>
-                            <span class="badge me-1 inactive-time-badge" 
-                                 title="Сейчас выключено" th:style="${rule.inactiveTime ? '' : 'display: none;'}">
-                                <i class="bi bi-clock-history"></i>
-                            </span>
-                            <span class="badge me-1 auto-on-badge" 
-                                 title="Автоматически включится завтра утром" th:style="${rule.autoOn ? '' : 'display: none;'}">
-                                Авто-вкл
-                            </span>
-                            <span class="badge me-1 auto-off-badge" 
-                                 title="Автоматически выключится завтра утром" th:style="${rule.autoOff ? '' : 'display: none;'}">
-                                Авто-выкл
-                            </span>
-                            <span class="badge status-badge" 
-                                  th:classappend="${rule.enabled ? 'bg-success' : 'bg-secondary'}" 
-                                  th:text="${rule.enabled ? 'Активно' : 'Неактивно'}">
-                            </span>
-                        </div>
+        <!-- Группы правил -->
+        <div id="groups-container">
+            <div th:each="groupEntry : ${groupedRules}" 
+                 th:with="groupName=${groupEntry.key}, groupRules=${groupEntry.value}, groupConfig=${groupConfigs[groupEntry.key]}"
+                 class="group-section">
+                
+                <button class="group-header" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        th:data-bs-target="'#group-' + ${groupName}" 
+                        th:classappend="${groupName == 'default' ? 'default-group' : groupName}"
+                        th:id="'group-header-' + ${groupName}">
+                    <div class="group-info">
+                        <h3 class="group-title" th:text="${groupConfig?.name ?: #strings.capitalize(groupName)}">Группа</h3>
+                        <span class="group-stats">
+                            <span th:text="${#lists.size(groupRules)}">0</span> правил
+                            (<span th:text="${#lists.size(groupRules.?[enabled == true])}">0</span> активных)
+                        </span>
                     </div>
-                    <div class="card-body">
-                        <p class="card-text" th:text="${rule.description}"></p>
-                    </div>
-                    <div class="card-footer d-flex justify-content-between">
-                        <div class="d-flex">
-                            <button class="btn btn-sm toggle-rule me-2"
-                                    th:data-uid="${rule.uid}"
-                                    th:data-enable="${!rule.enabled}"
-                                    th:classappend="${rule.enabled ? 'btn-outline-danger' : 'btn-outline-success'}"
-                                    th:text="${rule.enabled ? 'Отключить' : 'Включить'}">
-                            </button>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-success dropdown-toggle temp-enable-btn" 
-                                        type="button"
-                                        data-bs-toggle="dropdown" 
-                                        aria-expanded="false"
-                                        th:data-uid="${rule.uid}">
-                                    На время
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item enable-temporary" 
-                                        th:data-uid="${rule.uid}" 
-                                        data-minutes="15">На 15 минут</a></li>
-                                    <li><a class="dropdown-item enable-temporary" 
-                                        th:data-uid="${rule.uid}" 
-                                        data-minutes="60">На 1 час</a></li>
-                                </ul>
+                    <i class="bi bi-chevron-down group-toggle-icon" 
+                       th:classappend="${groupConfig != null and groupConfig.expanded ? '' : 'collapsed'}"></i>
+                </button>
+                
+                <div class="collapse group-content"
+                     th:id="'group-' + ${groupName}"
+                     th:classappend="${groupConfig != null and groupConfig.expanded ? 'show' : ''}">
+                    <div class="row" th:data-group="${groupName}">
+                        <div th:each="rule : ${groupRules}" 
+                             th:class="'col-12 col-sm-6 col-lg-4 mb-4 rule-item ' + ${rule.enabled ? 'rule-enabled' : 'rule-disabled'}" 
+                             th:data-type="${rule.type}" 
+                             th:data-group="${rule.group}"
+                             th:id="'rule-' + ${rule.uid}"
+                             th:data-rule-number="${rule.ruleNumber}">
+                            <div th:class="'card rule-card ' + ${rule.enabled ? 'enabled enabled-bg' : 'disabled disabled-bg'}">
+                                
+                                <!-- Единый заголовок для всех устройств -->
+                                <div class="card-header">
+                                    <h5 class="rule-title" th:text="${rule.description}">Gaming PC</h5>
+                                    <p class="rule-description mb-0">
+                                        <span th:if="${rule.type == 'FIREWALL'}" th:text="'FW ' + ${rule.ruleNumber}">FW *37C</span>
+                                        <span th:if="${rule.type == 'QUEUE'}" th:text="'QUEUE ' + ${rule.ruleNumber}">QUEUE *1</span>
+                                    </p>
+                                </div>
+                                
+                                <!-- Единые кнопки действий для всех устройств -->
+                                <div class="card-actions">
+                                    <div class="actions-container">
+                                        <!-- Основная кнопка включить/отключить (показывается только если hideToggle = false) -->
+                                        <div class="primary-actions" th:style="${rule.hideToggle ? 'display: none;' : ''}">
+                                            <button class="btn toggle-rule"
+                                                    th:data-uid="${rule.uid}"
+                                                    th:data-enable="${!rule.enabled}"
+                                                    th:classappend="${rule.enabled ? 'btn-danger' : 'btn-success'}"
+                                                    th:text="${rule.enabled ? 'Отключить' : 'Включить'}">
+                                                Включить
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Кнопки временного включения -->
+                                        <div class="temp-actions">
+                                            <button class="btn btn-outline-success enable-temporary"
+                                                    th:data-uid="${rule.uid}"
+                                                    data-minutes="15">
+                                                На 15 минут
+                                            </button>
+                                            <button class="btn btn-outline-success enable-temporary"
+                                                    th:data-uid="${rule.uid}"
+                                                    data-minutes="60">
+                                                На 1 час
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Footer: статусы + иконка обновления -->
+                                <div class="card-footer">
+                                    <!-- Статусы слева -->
+                                    <div class="status-badges">
+                                        <span class="badge scheduled-badge" 
+                                             title="Работает только в определенные часы" 
+                                             th:style="${rule.scheduled ? '' : 'display: none;'}">
+                                            <i class="bi bi-clock"></i>
+                                        </span>
+                                        <span class="badge inactive-time-badge" 
+                                             title="Сейчас выключено" 
+                                             th:style="${rule.inactiveTime ? '' : 'display: none;'}">
+                                            <i class="bi bi-clock-history"></i>
+                                        </span>
+                                        <span class="badge auto-on-badge" 
+                                             title="Автоматически включится завтра утром" 
+                                             th:style="${rule.autoOn ? '' : 'display: none;'}">
+                                            Авто-вкл
+                                        </span>
+                                        <span class="badge auto-off-badge" 
+                                             title="Автоматически выключится завтра утром" 
+                                             th:style="${rule.autoOff ? '' : 'display: none;'}">
+                                            Авто-выкл
+                                        </span>
+                                        <span class="badge status-badge" 
+                                              th:classappend="${rule.enabled ? 'bg-success' : 'bg-secondary'}" 
+                                              th:text="${rule.enabled ? 'Активно' : 'Неактивно'}">
+                                            Активно
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Иконка обновления справа -->
+                                    <button class="btn btn-sm btn-outline-secondary refresh-rule rounded-circle p-2" 
+                                            th:data-uid="${rule.uid}"
+                                            title="Обновить статус"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary refresh-rule" 
-                                th:data-uid="${rule.uid}">Обновить статус</button>
                     </div>
                 </div>
             </div>
@@ -214,256 +242,6 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Подготовка уведомлений
-        const toastElement = document.getElementById('notification');
-        const toastMessage = document.getElementById('notification-message');
-        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
-        
-        // При загрузке страницы проверяем и корректируем заголовки
-        document.addEventListener('DOMContentLoaded', function() {
-            // Проверяем все карточки и корректируем заголовки
-            document.querySelectorAll('.rule-item').forEach(item => {
-                const type = item.dataset.type;
-                const ruleNumber = item.dataset.ruleNumber;
-                const cardTitle = item.querySelector('.card-title');
-
-                if (type === 'FIREWALL') {
-                    cardTitle.textContent = 'FW ' + ruleNumber;
-                } else {
-                    cardTitle.textContent = type + ' ' + ruleNumber;
-                }
-            });
-        });
-        
-        // Периодическое обновление отменено - страница обновляется только при действиях пользователя
-        
-        function showNotification(message, isSuccess) {
-            toastElement.classList.remove('text-bg-success', 'text-bg-danger');
-            toastElement.classList.add(isSuccess ? 'text-bg-success' : 'text-bg-danger');
-            toastMessage.textContent = message;
-            toast.show();
-        }
-        
-        // Переключение правила (AJAX)
-        document.querySelectorAll('.toggle-rule').forEach(button => {
-            button.addEventListener('click', function() {
-                const uid = this.dataset.uid;
-                const enable = this.dataset.enable === 'true';
-                
-                // Отключаем кнопку на время запроса
-                this.disabled = true;
-                
-                fetch(`/api/rules/${uid}/toggle?enable=${enable}`, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Включаем кнопку обратно
-                    this.disabled = false;
-                    
-                    // Обновляем состояние кнопки
-                    updateRuleCard(data);
-                    showNotification(`Правило успешно ${enable ? 'включено' : 'отключено'}`, true);
-                })
-                .catch(error => {
-                    // Включаем кнопку обратно в случае ошибки
-                    this.disabled = false;
-                    showNotification('Ошибка при выполнении запроса: ' + error, false);
-                    console.error('Ошибка:', error);
-                });
-            });
-        });
-        
-        // Временное изменение состояния правила
-        document.querySelectorAll('.enable-temporary').forEach(link => {
-            link.addEventListener('click', function() {
-                const uid = this.dataset.uid;
-                const minutes = this.dataset.minutes;
-                
-                // Найдем карточку правила
-                const ruleCard = document.getElementById('rule-' + uid);
-                
-                // Определяем текущее состояние правила и целевое состояние для планировщика
-                const isCurrentlyEnabled = ruleCard.classList.contains('rule-enabled');
-                
-                // Определяем целевое состояние (противоположное текущему)
-                const targetState = !isCurrentlyEnabled;
-                
-                // Сначала изменяем состояние правила
-                fetch(`/api/rules/${uid}/toggle?enable=${targetState}`, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Обновляем отображение правила
-                    updateRuleCard(data);
-                    
-                    // Планируем возврат в исходное состояние
-                    return fetch(`/api/rules/${uid}/schedule?targetState=${isCurrentlyEnabled}&minutes=${minutes}`, {
-                        method: 'POST'
-                    });
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const action = targetState ? 'включено' : 'отключено';
-                        showNotification(`Правило временно ${action} на ${minutes} минут`, true);
-                    } else {
-                        showNotification(`Ошибка при планировании: ${data.error}`, false);
-                    }
-                })
-                .catch(error => {
-                    showNotification('Ошибка при выполнении запроса: ' + error, false);
-                    console.error('Ошибка:', error);
-                });
-            });
-        });
-        
-        // Обновление карточки правила после переключения
-        function updateRuleCard(rule) {
-            const ruleCard = document.getElementById('rule-' + rule.uid);
-            if (!ruleCard) return;
-            
-            // Обновляем классы для стилизации
-            if (rule.enabled) {
-                ruleCard.classList.add('rule-enabled');
-                ruleCard.classList.remove('rule-disabled');
-            } else {
-                ruleCard.classList.add('rule-disabled');
-                ruleCard.classList.remove('rule-enabled');
-            }
-            
-            // Обновляем стиль карточки
-            const card = ruleCard.querySelector('.card');
-            if (rule.enabled) {
-                card.classList.add('enabled', 'enabled-bg');
-                card.classList.remove('disabled', 'disabled-bg');
-            } else {
-                card.classList.add('disabled', 'disabled-bg');
-                card.classList.remove('enabled', 'enabled-bg');
-            }
-            
-            // Обновляем видимость бейджей
-            const scheduledBadge = ruleCard.querySelector('.scheduled-badge');
-            if (scheduledBadge) {
-                scheduledBadge.style.display = rule.scheduled ? '' : 'none';
-            }
-            
-            const inactiveTimeBadge = ruleCard.querySelector('.inactive-time-badge');
-            if (inactiveTimeBadge) {
-                inactiveTimeBadge.style.display = rule.inactiveTime ? '' : 'none';
-            }
-            
-            const autoOnBadge = ruleCard.querySelector('.auto-on-badge');
-            if (autoOnBadge) {
-                autoOnBadge.style.display = rule.autoOn ? '' : 'none';
-            }
-            
-            const autoOffBadge = ruleCard.querySelector('.auto-off-badge');
-            if (autoOffBadge) {
-                autoOffBadge.style.display = rule.autoOff ? '' : 'none';
-            }
-            
-            // Обновляем только бейдж статуса
-            const statusBadge = ruleCard.querySelector('.status-badge');
-            if (statusBadge) {
-                statusBadge.className = 'badge status-badge ' + (rule.enabled ? 'bg-success' : 'bg-secondary');
-                statusBadge.textContent = rule.enabled ? 'Активно' : 'Неактивно';
-            }
-            
-            // Обновляем кнопку переключения
-            const toggleButton = ruleCard.querySelector('.toggle-rule');
-            if (toggleButton) {
-                toggleButton.className = 'btn btn-sm toggle-rule ' + 
-                                      (rule.enabled ? 'btn-outline-danger' : 'btn-outline-success');
-                toggleButton.textContent = rule.enabled ? 'Отключить' : 'Включить';
-                toggleButton.dataset.enable = (!rule.enabled).toString();
-            }
-            
-            // Убрана вся логика, связанная с отображением информации о временном состоянии
-        }
-        
-        // Функция для работы с временным состоянием удалена - фронт не знает о временном статусе
-        
-        // Проверяем все правила на наличие временного включения - функция удалена, т.к. не нужна
-        
-        // Обновление статуса правила
-        document.querySelectorAll('.refresh-rule').forEach(button => {
-            button.addEventListener('click', function() {
-                const uid = this.dataset.uid;
-                
-                // Отключаем кнопку на время запроса
-                this.disabled = true;
-                
-                fetch(`/api/rules/${uid}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        // Включаем кнопку обратно
-                        this.disabled = false;
-                        updateRuleCard(data);
-                        showNotification('Статус правила обновлен', true);
-                    })
-                    .catch(error => {
-                        // Включаем кнопку обратно в случае ошибки
-                        this.disabled = false;
-                        showNotification('Ошибка при обновлении статуса: ' + error, false);
-                        console.error('Ошибка:', error);
-                    });
-            });
-        });
-        
-        // Фильтрация по типу
-        document.querySelectorAll('.filter-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const filter = this.dataset.filter;
-                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
-                filterRules();
-            });
-        });
-        
-        // Фильтрация по состоянию
-        document.querySelectorAll('.filter-state-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const stateFilter = this.dataset.state;
-                document.querySelectorAll('.filter-state-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
-                filterRules();
-            });
-        });
-        
-        // Поиск по описанию
-        document.getElementById('rule-search').addEventListener('input', function() {
-            filterRules();
-        });
-        
-        // Функция фильтрации
-        function filterRules() {
-            const typeFilter = document.querySelector('.filter-btn.active').dataset.filter;
-            const stateFilter = document.querySelector('.filter-state-btn.active').dataset.state;
-            const searchText = document.getElementById('rule-search').value.toLowerCase();
-            
-            document.querySelectorAll('.rule-item').forEach(item => {
-                const ruleType = item.dataset.type;
-                const isEnabled = item.classList.contains('rule-enabled');
-                const description = item.querySelector('.card-text').textContent.toLowerCase();
-                
-                const matchesType = typeFilter === 'all' || ruleType === typeFilter;
-                const matchesState = stateFilter === 'all' || 
-                                    (stateFilter === 'enabled' && isEnabled) || 
-                                    (stateFilter === 'disabled' && !isEnabled);
-                const matchesSearch = description.includes(searchText);
-                
-                if (matchesType && matchesState && matchesSearch) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        }
-    </script>
+    <script th:src="@{/js/mikrotik-app.js}"></script>
 </body>
 </html>

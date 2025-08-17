@@ -2,6 +2,7 @@ package com.baybaka.mikrotikcontrol.application.service
 
 import com.baybaka.mikrotikcontrol.domain.exception.EntityNotFoundException
 import com.baybaka.mikrotikcontrol.domain.model.MikrotikRule
+import com.baybaka.mikrotikcontrol.domain.model.GroupConfig
 import com.baybaka.mikrotikcontrol.domain.repository.RuleRepository
 import com.baybaka.mikrotikcontrol.domain.service.MikrotikApiPort
 import org.slf4j.LoggerFactory
@@ -69,5 +70,12 @@ class RuleManagementService(
      */
     fun getAllRules(): List<MikrotikRule> {
         return ruleRepository.findAll()
+    }
+    
+    /**
+     * Получить отсортированные конфигурации групп
+     */
+    fun getSortedGroupConfigs(): List<Pair<String, GroupConfig>> {
+        return configProperties.getSortedGroups()
     }
 }

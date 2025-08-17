@@ -1,0 +1,419 @@
+/* ===== ОСНОВНЫЕ СТИЛИ КАРТОЧЕК ===== */
+.rule-card {
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 0;
+}
+
+.rule-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    z-index: 1020;
+}
+
+.enabled {
+    border-left: 5px solid #198754; /* Зеленый цвет для включенных правил */
+}
+
+.disabled {
+    border-left: 5px solid #6c757d; /* Серый цвет для выключенных правил */
+}
+
+.enabled-bg {
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+.disabled-bg {
+    background-color: rgba(220, 220, 220, 0.3);
+}
+
+/* ===== БЕЙДЖИ СТАТУСОВ ===== */
+.auto-on-badge {
+    background-color: #7289DA !important; /* Цвет для Авто-вкл */
+    color: white !important;
+    font-weight: bold;
+}
+
+.auto-off-badge {
+    background-color: #FFA500 !important; /* Цвет для Авто-выкл */
+    color: white !important;
+    font-weight: bold;
+}
+
+.scheduled-badge {
+    background-color: #0d6efd !important; /* Синий цвет для часов */
+    color: white !important;
+    font-size: 0.8em;
+    padding: 0.25em 0.5em;
+}
+
+.inactive-time-badge {
+    background-color: #dc3545 !important; /* Красный цвет для "сейчас выключено" */
+    color: white !important;
+    font-size: 0.8em;
+    padding: 0.25em 0.5em;
+}
+
+.time-blocked-badge {
+    background-color: #6c757d !important; /* Серый цвет для временной блокировки */
+    color: white !important;
+    font-size: 0.8em;
+    padding: 0.25em 0.5em;
+}
+
+/* ===== УВЕДОМЛЕНИЯ ===== */
+#notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    display: none;
+}
+
+/* ===== МОБИЛЬНАЯ ВЕРСИЯ КАРТОЧКИ ===== */
+.rule-card .card-header {
+    padding: 0.75rem 1rem;
+    border-bottom: none;
+}
+
+.rule-card .card-body {
+    padding: 0 1rem 1rem 1rem;
+    text-align: center;
+}
+
+.rule-card .card-actions {
+    padding: 1rem;
+    text-align: center;
+    border-top: 1px solid rgba(0,0,0,.125);
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.rule-card .card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+}
+
+.rule-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #212529;
+}
+
+.rule-description {
+    font-size: 0.95rem;
+    margin: 0;
+    color: #6c757d;
+}
+
+/* ===== МОБИЛЬНЫЙ ЗАГОЛОВОК ===== */
+.mobile-header-container {
+    position: relative;
+    min-height: 60px;
+}
+
+.mobile-logout-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 10;
+}
+
+.mobile-logout-btn .btn {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+/* ===== СТИЛИ КНОПКИ ФИЛЬТРОВ ===== */
+.mobile-filters-toggle {
+    border: 2px dashed #dee2e6 !important;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.mobile-filters-toggle:hover {
+    border-color: #6c757d !important;
+    background-color: #e9ecef !important;
+}
+
+.mobile-filters-toggle .bi-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.mobile-filters-toggle[aria-expanded="true"] .bi-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* ===== КНОПКИ ДЕЙСТВИЙ ===== */
+.actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.primary-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.temp-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.refresh-action {
+    display: flex;
+    justify-content: center;
+}
+
+.primary-actions .btn {
+    flex: 1;
+    font-weight: 600;
+}
+
+.temp-actions .btn {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.refresh-action .btn {
+    min-width: 140px;
+    font-size: 0.9rem;
+}
+
+/* Заблокированная кнопка */
+.btn-time-blocked {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: white !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+.btn-time-blocked:hover {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    transform: none !important;
+}
+
+/* ===== БЕЙДЖИ В FOOTER ===== */
+.status-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+.status-badges .badge {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+}
+
+/* ===== СТИЛИ ДЛЯ ГРУПП ===== */
+.group-section {
+    margin-bottom: 1.5rem;
+}
+
+.group-header {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+    border: none;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.group-header:hover {
+    background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.group-header.default-group {
+    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+}
+
+.group-header .group-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.group-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.group-stats {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.group-toggle-icon {
+    transition: transform 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.group-toggle-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+.group-content {
+    padding-top: 1rem;
+}
+
+.group-content.collapse {
+    transition: height 0.3s ease;
+}
+
+/* ===== ЦВЕТОВАЯ СХЕМА ДЛЯ РАЗНЫХ ГРУПП ===== */
+.group-header.devices {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.group-header.mobile {
+    background: linear-gradient(135deg, #fd7e14 0%, #e65a00 100%);
+}
+
+.group-header.computers {
+    background: linear-gradient(135deg, #20c997 0%, #1aa179 100%);
+}
+
+.group-header.iot {
+    background: linear-gradient(135deg, #6f42c1 0%, #59359a 100%);
+}
+
+.group-header.security {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.group-header.network {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a53be 100%);
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 768px) {
+    /* Скрываем кнопку обновления на мобильных */
+    .refresh-action {
+        display: none !important;
+    }
+    
+    /* Мобильная компоновка заголовка */
+    .container {
+        position: relative;
+    }
+    
+    /* Уменьшаем отступы на мобильных */
+    .container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    .filters-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .filters-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+        min-width: auto;
+        font-size: 0.875rem;
+    }
+    
+    .group-header {
+        padding: 0.75rem;
+    }
+    
+    .group-title {
+        font-size: 1rem;
+    }
+    
+    .group-stats {
+        font-size: 0.8rem;
+    }
+    
+    .rule-card .card-header {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .rule-card .card-body {
+        padding: 0 0.75rem 0.75rem 0.75rem;
+    }
+    
+    .rule-card .card-actions {
+        padding: 0.75rem;
+    }
+    
+    .rule-card .card-footer {
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* ===== ДЕСКТОПНАЯ ВЕРСИЯ (обновленный единый стиль) ===== */
+@media (min-width: 769px) {
+    .card-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        padding-top: 0.5rem;
+        gap: 0;
+    }
+
+    /* Показываем кнопки действий на всех устройствах */
+    .rule-card .card-actions {
+        display: block;
+    }
+    
+    .rule-card .card-header {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .rule-card .card-footer {
+        padding: 1rem;
+        border-top: 1px solid rgba(0,0,0,.125);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .rule-title {
+        font-size: 1.25rem;
+    }
+    
+    .status-badges {
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+}
