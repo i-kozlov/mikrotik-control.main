@@ -45,8 +45,8 @@ class RuleInitializerTest {
         }
 
         // Configure mocks
-        `when`(mockConfigProperties.formattedRulesList).thenReturn(listOf("*1", "*2"))
-        `when`(mockConfigProperties.formattedQueueList).thenReturn(listOf("*3", "*4"))
+        `when`(mockConfigProperties.getOrderedFirewallIds()).thenReturn(listOf("*1", "*2"))
+        `when`(mockConfigProperties.getOrderedQueueIds()).thenReturn(listOf("*3", "*4"))
 
         ruleInitializer = RuleInitializer(mockConfigProperties, mockRepository, mockApiClient)
     }
@@ -146,8 +146,8 @@ class RuleInitializerTest {
     @Test
     fun `should handle empty rule lists in configuration`() {
         // Arrange
-        `when`(mockConfigProperties.formattedRulesList).thenReturn(emptyList())
-        `when`(mockConfigProperties.formattedQueueList).thenReturn(emptyList())
+        `when`(mockConfigProperties.getOrderedFirewallIds()).thenReturn(emptyList())
+        `when`(mockConfigProperties.getOrderedQueueIds()).thenReturn(emptyList())
 
         // Act
         ruleInitializer.run(mockArgs)

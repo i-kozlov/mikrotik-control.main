@@ -3,15 +3,16 @@ package com.baybaka.mikrotikcontrol.infrastructure.repository
 import com.baybaka.mikrotikcontrol.domain.model.MikrotikRule
 import com.baybaka.mikrotikcontrol.domain.repository.RuleRepository
 import org.springframework.stereotype.Repository
-import java.util.concurrent.ConcurrentHashMap
+
 
 /**
  * In-memory реализация репозитория правил
+ * Использует LinkedHashMap для сохранения порядка правил из конфигурации
  */
 @Repository
 class InMemoryRuleRepository : RuleRepository {
     
-    private val rules = ConcurrentHashMap<String, MikrotikRule>()
+    private val rules = LinkedHashMap<String, MikrotikRule>()
     
     override fun findByUid(uid: String): MikrotikRule? {
         return rules[uid]

@@ -1,0 +1,36 @@
+mikrotik:
+  router-url: http://${ROUTER_IP}
+  username: ${ROUTER_USER}
+  password: ${ROUTER_PASSWORD}
+
+  groups:
+    main:
+      name: "Основные правила"
+      order: 1
+      expanded: true
+    iot:
+      name: "Умный дом"
+      order: 2
+    mobile:
+      name: "mobile"
+      order: 3
+    computers:
+      name: "computers"
+      order: 3
+
+  
+  # simple format
+  simple-queue-list:
+    - "1"
+  rules-list:
+    - "381" # id example
+# full config format
+  firewall-rules:
+    - id: "381"
+      description: "Turn TV on"
+      group: "main"
+      hideToggle: true
+
+  queue-rules:
+    - id: "1"
+      description: "speed limit for phone1"

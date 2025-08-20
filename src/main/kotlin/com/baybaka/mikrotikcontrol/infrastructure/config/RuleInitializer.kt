@@ -51,8 +51,11 @@ class RuleInitializer(
      * Получение правил очередей
      */
     private fun queueRules(): List<MikrotikRule>? {
+        // Получаем список настроенных ID в порядке конфигурации
+        val configuredIds = configProperties.getOrderedQueueIds()
+        
         // Проверяем, настроены ли правила очередей
-        if (configProperties.formattedQueueList.isEmpty()) {
+        if (configuredIds.isEmpty()) {
             logger.info("Список правил очередей не настроен, пропускаем загрузку")
             return emptyList()
         }
@@ -60,22 +63,25 @@ class RuleInitializer(
         try {
             val allRules = apiClient.getSimpleQueueRules()
             logger.info("Получено ${allRules.size} правил очередей из API")
-            
-            // Получаем список ID с добавлением "*"
-            val configuredIds = configProperties.formattedQueueList
             logger.info("Настроенные ID правил очередей: $configuredIds")
             
-            // Преобразуем ответ от API в доменные объекты
+            // Создаем карту для быстрого поиска правил по ID
+            val rulesMap = allRules.associateBy { it.id }
+            
+            // Преобразуем ответ от API в доменные объекты в порядке конфигурации
             val rules = mutableListOf<MikrotikRule>()
             
-            // Обрабатываем каждое правило из списка
-            for (rule in allRules) {
-                val id = rule.id
-                if (configuredIds.contains(id)) {
+            // Итерируемся по configuredIds для сохранения порядка
+            for (configuredId in configuredIds) {
+                val rule = rulesMap[configuredId]
+                if (rule != null) {
                     val mikrotikRule = createRuleFromQueueData(rule)
                     rules.add(mikrotikRule)
+                } else {
+                    logger.warn("Правило очереди с ID $configuredId не найдено в API")
                 }
             }
+            
             return rules
         } catch (e: Exception) {
             logger.error("Ошибка при загрузке правил очередей: ${e.message}", e)
@@ -87,8 +93,11 @@ class RuleInitializer(
      * Получение правил фаервола
      */
     private fun firewallRules(): List<MikrotikRule>? {
+        // Получаем список настроенных ID в порядке конфигурации
+        val configuredIds = configProperties.getOrderedFirewallIds()
+        
         // Проверяем, настроены ли правила фаервола
-        if (configProperties.formattedRulesList.isEmpty()) {
+        if (configuredIds.isEmpty()) {
             logger.info("Список правил фаервола не настроен, пропускаем загрузку")
             return emptyList()
         }
@@ -96,22 +105,25 @@ class RuleInitializer(
         try {
             val allRules = apiClient.getFirewallRuleAll()
             logger.info("Получено ${allRules.size} правил фаервола из API")
-            
-            // Получаем список ID с добавлением "*"
-            val configuredIds = configProperties.formattedRulesList
             logger.info("Настроенные ID правил фаервола: $configuredIds")
             
-            // Преобразуем ответ от API в доменные объекты
+            // Создаем карту для быстрого поиска правил по ID
+            val rulesMap = allRules.associateBy { it.id }
+            
+            // Преобразуем ответ от API в доменные объекты в порядке конфигурации
             val rules = mutableListOf<MikrotikRule>()
             
-            // Обрабатываем каждое правило из списка
-            for (rule in allRules) {
-                val id = rule.id
-                if (configuredIds.contains(id)) {
+            // Итерируемся по configuredIds для сохранения порядка
+            for (configuredId in configuredIds) {
+                val rule = rulesMap[configuredId]
+                if (rule != null) {
                     val mikrotikRule = createRuleFromFirewallData(rule)
                     rules.add(mikrotikRule)
+                } else {
+                    logger.warn("Правило фаервола с ID $configuredId не найдено в API")
                 }
             }
+            
             return rules
         } catch (e: Exception) {
             logger.error("Ошибка при загрузке правил фаервола: ${e.message}", e)
@@ -127,12 +139,20 @@ class RuleInitializer(
         val comment = rule.comment ?: ""
         val isDisabled = rule.disabled
 
-        // Извлекаем описание
-        val description = if (comment.contains("#description")) {
-            comment.substringAfter("#description", comment).trim()
-        } else {
-            comment.trim()
+        // Получаем конфигурацию правила
+        val ruleConfig = configProperties.getFirewallRuleConfig(id)
+
+        // Извлекаем описание с приоритетом из конфигурации
+        val description = ruleConfig?.description ?: run {
+            if (comment.contains("#description")) {
+                comment.substringAfter("#description", comment).trim()
+            } else {
+                comment.trim()
+            }
         }
+
+        // Определяем группу
+        val group = ruleConfig?.group ?: "default"
 
         // Определяем флаги автоматизации
         val autoOff = comment.startsWith("auto_off", ignoreCase = true)
@@ -145,11 +165,13 @@ class RuleInitializer(
             type = RuleType.FIREWALL,
             ruleNumber = id,
             description = description,
+            group = group,
             enabled = !isDisabled,
             autoOff = autoOff,
             autoOn = autoOn,
             inactiveTime = inactiveTime,
-            scheduled = scheduled
+            scheduled = scheduled,
+            hideToggle = ruleConfig?.hideToggle ?: false
         )
     }
     
@@ -161,12 +183,20 @@ class RuleInitializer(
         val comment = rule.comment ?: ""
         val isDisabled = rule.disabled
 
-        // Извлекаем описание
-        val description = if (comment.contains("#description")) {
-            comment.substringAfter("#description", comment).trim()
-        } else {
-            comment.trim()
+        // Получаем конфигурацию правила
+        val ruleConfig = configProperties.getQueueRuleConfig(id)
+
+        // Извлекаем описание с приоритетом из конфигурации
+        val description = ruleConfig?.description ?: run {
+            if (comment.contains("#description")) {
+                comment.substringAfter("#description", comment).trim()
+            } else {
+                comment.trim()
+            }
         }
+
+        // Определяем группу
+        val group = ruleConfig?.group ?: "default"
 
         // Определяем флаги автоматизации
         val autoOff = comment.startsWith("auto_off", ignoreCase = true)
@@ -179,11 +209,13 @@ class RuleInitializer(
             type = RuleType.QUEUE,
             ruleNumber = id,
             description = description,
+            group = group,
             enabled = !isDisabled,
             autoOff = autoOff,
             autoOn = autoOn,
             inactiveTime = inactiveTime,
-            scheduled = scheduled
+            scheduled = scheduled,
+            hideToggle = ruleConfig?.hideToggle ?: false
         )
     }
 }

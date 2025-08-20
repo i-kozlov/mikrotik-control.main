@@ -11,9 +11,13 @@ data class MikrotikRuleDto(
     val type: String,
     val ruleNumber: String,
     val description: String,
+    val group: String,
     val enabled: Boolean,
     val autoOff: Boolean,
-    val autoOn: Boolean
+    val autoOn: Boolean,
+    val scheduled: Boolean,
+    val inactiveTime: Boolean,
+    val hideToggle: Boolean
 )
 
 /**
@@ -33,8 +37,12 @@ fun MikrotikRule.toDto(): MikrotikRuleDto {
         type = this.type.name,
         ruleNumber = this.ruleNumber,
         description = this.description,
+        group = this.group,
         enabled = this.enabled,
         autoOff = this.autoOff,
-        autoOn = this.autoOn
+        autoOn = this.autoOn,
+        scheduled = this.scheduled,
+        inactiveTime = this.inactiveTime,
+        hideToggle = this.hideToggle
     )
 }
